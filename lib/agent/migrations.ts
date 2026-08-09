@@ -91,6 +91,21 @@ interface MigrationPool {
   connect(): Promise<PoolClient>;
 }
 
+export async function isAgentSchemaCurrent(pool: Pick<Pool, "query">): Promise<boolean> {
+  try {
+    const marker = await pool.query<{ payload: { databaseVersion?: number } }>(
+      "SELECT payload FROM agent_state WHERE id = '__schema__'",
+    );
+    const current = Number(marker.rows[0]?.payload?.databaseVersion ?? 0);
+    return current >= AGENT_MIGRATIONS.at(-1)!.version;
+  } catch (error) {
+    // A fresh database does not have agent_state yet. Any other database error
+    // must still surface instead of being mistaken for a pending migration.
+    if (error && typeof error === "object" && "code" in error && error.code === "42P01") return false;
+    throw error;
+  }
+}
+
 export async function runAgentMigrations(pool: Pool | MigrationPool): Promise<void> {
   const client = await pool.connect();
   try {

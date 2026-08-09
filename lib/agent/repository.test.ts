@@ -28,7 +28,7 @@ import {
 } from "./repository.ts";
 import * as agentRepository from "./repository.ts";
 import { AGENT_SCHEMA_SQL } from "./schema.ts";
-import { AGENT_MIGRATIONS, runAgentMigrations } from "./migrations.ts";
+import { AGENT_MIGRATIONS, isAgentSchemaCurrent, runAgentMigrations } from "./migrations.ts";
 
 function run(id: string, creatorSessionId: string, overrides: Partial<StoredAgentRun> = {}): StoredAgentRun {
   return {
@@ -72,6 +72,8 @@ test("the Agent PostgreSQL pool bounds connection and migration waits", () => {
       connectionTimeoutMillis?: number;
       statement_timeout?: false | number;
       query_timeout?: number;
+      keepAlive?: boolean;
+      keepAliveInitialDelayMillis?: number;
     };
   }).createAgentPostgresPoolConfig;
   assert.equal(typeof createPoolConfig, "function");
@@ -92,6 +94,8 @@ test("the Agent PostgreSQL pool bounds connection and migration waits", () => {
     typeof config.query_timeout === "number"
       && config.query_timeout >= config.statement_timeout,
   );
+  assert.equal(config.keepAlive, true);
+  assert.equal(config.keepAliveInitialDelayMillis, 0);
 });
 
 test("memory CRUD rejects unknown keys and missing or expired sessions", () => {
@@ -373,6 +377,31 @@ test("migration runner serializes upgrades and records schema version without a 
   await runAgentMigrations({ async connect() { return existingClient as never; } });
   assert.equal(existingQueries.some((query) => query.includes("CREATE TABLE IF NOT EXISTS")), false);
   assert.equal(existingQueries.some((query) => query.includes("WITH legacy AS")), false);
+});
+
+test("schema initialization uses one fast marker query when migrations are current", async () => {
+  const queries: string[] = [];
+  const current = await isAgentSchemaCurrent({
+    async query(sql: string) {
+      queries.push(sql);
+      return { rows: [{ payload: { databaseVersion: AGENT_MIGRATIONS.at(-1)!.version } }] } as never;
+    },
+  } as never);
+  assert.equal(current, true);
+  assert.equal(queries.length, 1);
+
+  const missing = await isAgentSchemaCurrent({
+    async query() { throw Object.assign(new Error("missing relation"), { code: "42P01" }); },
+  } as never);
+  assert.equal(missing, false);
+});
+
+test("postgres projections batch child rows and skip unchanged collections", async () => {
+  const source = await readFile(new URL("./repository.ts", import.meta.url), "utf8");
+  assert.match(source, /unnest\(\$2::text\[\], \$3::jsonb\[\]\)/);
+  assert.match(source, /sameProjection\(previousRun\?\.candidates, run\.candidates\)/);
+  assert.doesNotMatch(source, /for \(const candidate of run\.candidates\) await client\.query/);
+  assert.doesNotMatch(source, /for \(const message of run\.messages\) await client\.query/);
 });
 
 test("tool call projection embeds the matching structured result without a ninth table", () => {

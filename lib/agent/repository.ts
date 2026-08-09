@@ -8,7 +8,7 @@ import { withPostgresTransactionClient } from "../postgresTransactionContext.ts"
 import { trimRecentMessages } from "./budget.ts";
 import { recordMemory } from "./memory.ts";
 import { assertExpectedRevision } from "./machine.ts";
-import { runAgentMigrations } from "./migrations.ts";
+import { isAgentSchemaCurrent, runAgentMigrations } from "./migrations.ts";
 import type { AgentRun, Memory, MemoryKey } from "./types.ts";
 import type { AgentQuotaUsage } from "./quota.ts";
 
@@ -390,7 +390,7 @@ export class PostgresAgentRepository implements AgentRepository {
   private readonly pool: Pool;
   constructor(connectionString: string) { this.pool = new Pool(createAgentPostgresPoolConfig(connectionString)); }
   async initialize(): Promise<void> {
-    await runAgentMigrations(this.pool);
+    if (!(await isAgentSchemaCurrent(this.pool))) await runAgentMigrations(this.pool);
   }
   async read(scope?: AgentRepositoryScope): Promise<AgentState> {
     const keys = shardKeys(scope);
@@ -548,6 +548,8 @@ export function createAgentPostgresPoolConfig(connectionString: string): PoolCon
   return {
     connectionString,
     max: 5,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 0,
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 10_000,
     statement_timeout: 10_000,
@@ -563,6 +565,10 @@ async function deleteMissing(client: PoolClient, table: string, ownerColumn: str
   await client.query(`DELETE FROM ${table} WHERE ${ownerColumn} = $1 AND NOT (id = ANY($2::text[]))`, [ownerId, ids]);
 }
 
+function sameProjection(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 async function syncSessionProjection(client: PoolClient, before: AgentState, after: AgentState, digest: string): Promise<void> {
   const previous = before.creatorSessions.find((session) => session.tokenDigest === digest);
   const session = after.creatorSessions.find((item) => item.tokenDigest === digest);
@@ -570,48 +576,68 @@ async function syncSessionProjection(client: PoolClient, before: AgentState, aft
     if (previous) await client.query("DELETE FROM creator_session WHERE id = $1", [previous.id]);
     return;
   }
-  await client.query(
-    "INSERT INTO creator_session (id, token_digest, expires_at, last_seen_at, payload) VALUES ($1,$2,$3,$4,$5::jsonb) ON CONFLICT (id) DO UPDATE SET token_digest=EXCLUDED.token_digest, expires_at=EXCLUDED.expires_at, last_seen_at=EXCLUDED.last_seen_at, payload=EXCLUDED.payload",
-    [session.id, session.tokenDigest, session.expiresAt, session.lastSeenAt, JSON.stringify(session)],
-  );
+  if (!sameProjection(previous, session)) {
+    await client.query(
+      "INSERT INTO creator_session (id, token_digest, expires_at, last_seen_at, payload) VALUES ($1,$2,$3,$4,$5::jsonb) ON CONFLICT (id) DO UPDATE SET token_digest=EXCLUDED.token_digest, expires_at=EXCLUDED.expires_at, last_seen_at=EXCLUDED.last_seen_at, payload=EXCLUDED.payload",
+      [session.id, session.tokenDigest, session.expiresAt, session.lastSeenAt, JSON.stringify(session)],
+    );
+  }
   const runs = after.runs.filter((run) => run.creatorSessionId === session.id);
   for (const run of runs) {
-    await client.query(
-      "INSERT INTO agent_run (id, creator_session_id, revision, status, updated_at, payload) VALUES ($1,$2,$3,$4,$5,$6::jsonb) ON CONFLICT (id) DO UPDATE SET revision=EXCLUDED.revision, status=EXCLUDED.status, updated_at=EXCLUDED.updated_at, payload=EXCLUDED.payload",
-      [run.id, session.id, run.revision, run.status, run.updatedAt, JSON.stringify(run)],
-    );
-    for (const message of run.messages) await client.query(
-      "INSERT INTO agent_message (id, run_id, role, created_at, payload) VALUES ($1,$2,$3,$4,$5::jsonb) ON CONFLICT (id) DO UPDATE SET role=EXCLUDED.role, created_at=EXCLUDED.created_at, payload=EXCLUDED.payload",
-      [message.id, run.id, message.role, message.createdAt, JSON.stringify(message)],
-    );
-    await deleteMissing(client, "agent_message", "run_id", run.id, run.messages.map((item) => item.id));
-    for (const candidate of run.candidates) await client.query(
-      "INSERT INTO agent_candidate (id, run_id, payload) VALUES ($1,$2,$3::jsonb) ON CONFLICT (id) DO UPDATE SET payload=EXCLUDED.payload",
-      [candidate.id, run.id, JSON.stringify(candidate)],
-    );
-    await deleteMissing(client, "agent_candidate", "run_id", run.id, run.candidates.map((item) => item.id));
+    const previousRun = before.runs.find((item) => item.id === run.id);
+    if (!sameProjection(previousRun, run)) {
+      await client.query(
+        "INSERT INTO agent_run (id, creator_session_id, revision, status, updated_at, payload) VALUES ($1,$2,$3,$4,$5,$6::jsonb) ON CONFLICT (id) DO UPDATE SET revision=EXCLUDED.revision, status=EXCLUDED.status, updated_at=EXCLUDED.updated_at, payload=EXCLUDED.payload",
+        [run.id, session.id, run.revision, run.status, run.updatedAt, JSON.stringify(run)],
+      );
+    }
+    if (!sameProjection(previousRun?.messages, run.messages)) {
+      if (run.messages.length) await client.query(
+        "INSERT INTO agent_message (id, run_id, role, created_at, payload) SELECT item.id, $1, item.role, item.created_at, item.payload FROM unnest($2::text[], $3::text[], $4::timestamptz[], $5::jsonb[]) AS item(id, role, created_at, payload) ON CONFLICT (id) DO UPDATE SET role=EXCLUDED.role, created_at=EXCLUDED.created_at, payload=EXCLUDED.payload",
+        [run.id, run.messages.map((item) => item.id), run.messages.map((item) => item.role), run.messages.map((item) => item.createdAt), run.messages.map((item) => JSON.stringify(item))],
+      );
+      await deleteMissing(client, "agent_message", "run_id", run.id, run.messages.map((item) => item.id));
+    }
+    if (!sameProjection(previousRun?.candidates, run.candidates)) {
+      if (run.candidates.length) await client.query(
+        "INSERT INTO agent_candidate (id, run_id, payload) SELECT item.id, $1, item.payload FROM unnest($2::text[], $3::jsonb[]) AS item(id, payload) ON CONFLICT (id) DO UPDATE SET payload=EXCLUDED.payload",
+        [run.id, run.candidates.map((item) => item.id), run.candidates.map((item) => JSON.stringify(item))],
+      );
+      await deleteMissing(client, "agent_candidate", "run_id", run.id, run.candidates.map((item) => item.id));
+    }
     const calls = buildToolCallProjection(run);
-    for (const call of calls) await client.query(
-      "INSERT INTO agent_tool_call (id, run_id, tool, status, created_at, payload) VALUES ($1,$2,$3,$4,$5,$6::jsonb) ON CONFLICT (id) DO UPDATE SET tool=EXCLUDED.tool, status=EXCLUDED.status, created_at=EXCLUDED.created_at, payload=EXCLUDED.payload",
-      [call.id, run.id, call.tool, call.status, call.createdAt, JSON.stringify(call)],
-    );
-    await deleteMissing(client, "agent_tool_call", "run_id", run.id, calls.map((item) => item.id));
-    for (const approval of run.approvals) await client.query(
-      "INSERT INTO agent_approval (id, run_id, tool, status, requested_at, payload) VALUES ($1,$2,$3,$4,$5,$6::jsonb) ON CONFLICT (id) DO UPDATE SET tool=EXCLUDED.tool, status=EXCLUDED.status, requested_at=EXCLUDED.requested_at, payload=EXCLUDED.payload",
-      [approval.id, run.id, approval.tool, approval.status, approval.requestedAt, JSON.stringify(approval)],
-    );
-    await deleteMissing(client, "agent_approval", "run_id", run.id, run.approvals.map((item) => item.id));
+    const previousCalls = previousRun ? buildToolCallProjection(previousRun) : undefined;
+    if (!sameProjection(previousCalls, calls)) {
+      if (calls.length) await client.query(
+        "INSERT INTO agent_tool_call (id, run_id, tool, status, created_at, payload) SELECT item.id, $1, item.tool, item.status, item.created_at, item.payload FROM unnest($2::text[], $3::text[], $4::text[], $5::timestamptz[], $6::jsonb[]) AS item(id, tool, status, created_at, payload) ON CONFLICT (id) DO UPDATE SET tool=EXCLUDED.tool, status=EXCLUDED.status, created_at=EXCLUDED.created_at, payload=EXCLUDED.payload",
+        [run.id, calls.map((item) => item.id), calls.map((item) => item.tool), calls.map((item) => item.status), calls.map((item) => item.createdAt), calls.map((item) => JSON.stringify(item))],
+      );
+      await deleteMissing(client, "agent_tool_call", "run_id", run.id, calls.map((item) => item.id));
+    }
+    if (!sameProjection(previousRun?.approvals, run.approvals)) {
+      if (run.approvals.length) await client.query(
+        "INSERT INTO agent_approval (id, run_id, tool, status, requested_at, payload) SELECT item.id, $1, item.tool, item.status, item.requested_at, item.payload FROM unnest($2::text[], $3::text[], $4::text[], $5::timestamptz[], $6::jsonb[]) AS item(id, tool, status, requested_at, payload) ON CONFLICT (id) DO UPDATE SET tool=EXCLUDED.tool, status=EXCLUDED.status, requested_at=EXCLUDED.requested_at, payload=EXCLUDED.payload",
+        [run.id, run.approvals.map((item) => item.id), run.approvals.map((item) => item.tool), run.approvals.map((item) => item.status), run.approvals.map((item) => item.requestedAt), run.approvals.map((item) => JSON.stringify(item))],
+      );
+      await deleteMissing(client, "agent_approval", "run_id", run.id, run.approvals.map((item) => item.id));
+    }
   }
-  await deleteMissing(client, "agent_run", "creator_session_id", session.id, runs.map((run) => run.id));
+  const previousRuns = before.runs.filter((run) => run.creatorSessionId === session.id);
+  if (!sameProjection(previousRuns.map((run) => run.id), runs.map((run) => run.id))) {
+    await deleteMissing(client, "agent_run", "creator_session_id", session.id, runs.map((run) => run.id));
+  }
   const memoryEntries = after.memories.find((memory) => memory.creatorSessionId === session.id)?.memory.entries ?? [];
-  for (const entry of memoryEntries) await client.query(
-    "INSERT INTO creator_memory (creator_session_id, memory_key, memory_value, confidence, payload) VALUES ($1,$2,$3,$4,$5::jsonb) ON CONFLICT (creator_session_id,memory_key,memory_value) DO UPDATE SET confidence=EXCLUDED.confidence, payload=EXCLUDED.payload",
-    [session.id, entry.key, entry.value, entry.confidence, JSON.stringify(entry)],
-  );
-  await client.query(
-    "DELETE FROM creator_memory WHERE creator_session_id = $1 AND NOT ((memory_key, memory_value) IN (SELECT * FROM unnest($2::text[], $3::text[])))",
-    [session.id, memoryEntries.map((entry) => entry.key), memoryEntries.map((entry) => entry.value)],
-  );
+  const previousMemoryEntries = before.memories.find((memory) => memory.creatorSessionId === session.id)?.memory.entries ?? [];
+  if (!sameProjection(previousMemoryEntries, memoryEntries)) {
+    if (memoryEntries.length) await client.query(
+      "INSERT INTO creator_memory (creator_session_id, memory_key, memory_value, confidence, payload) SELECT $1, item.memory_key, item.memory_value, item.confidence, item.payload FROM unnest($2::text[], $3::text[], $4::float8[], $5::jsonb[]) AS item(memory_key, memory_value, confidence, payload) ON CONFLICT (creator_session_id,memory_key,memory_value) DO UPDATE SET confidence=EXCLUDED.confidence, payload=EXCLUDED.payload",
+      [session.id, memoryEntries.map((entry) => entry.key), memoryEntries.map((entry) => entry.value), memoryEntries.map((entry) => entry.confidence), memoryEntries.map((entry) => JSON.stringify(entry))],
+    );
+    await client.query(
+      "DELETE FROM creator_memory WHERE creator_session_id = $1 AND NOT ((memory_key, memory_value) IN (SELECT * FROM unnest($2::text[], $3::text[])))",
+      [session.id, memoryEntries.map((entry) => entry.key), memoryEntries.map((entry) => entry.value)],
+    );
+  }
 }
 
 export function buildToolCallProjection(run: StoredAgentRun): Array<AgentRun["toolCalls"][number] & { result?: AgentRun["toolResults"][number] }> {
