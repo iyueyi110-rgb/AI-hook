@@ -23,20 +23,15 @@ AI Hook Lab 面向中文内容创作者与内容运营团队，把结构化创�
 | 方法已实现 | 双人盲评、第三人裁决、Bad Case 护栏、Prompt 升级门槛 | candidate 已经改善质量或应当升级 |
 | 待真实验证 | 5–8 名目标创作者、至少 30 个真实任务的研究计划 | 用户人数、收藏率、选择率和提升值 |
 
-## 一分钟阅读路径
+## 招聘方阅读入口
 
-- 在线 Demo 状态：公网自动请求返回 200，但手机流量、无痕浏览器与桌面交互尚未完成人工验收，因此暂不作为公开入口。详见 [Demo 验证记录](docs/portfolio/demo-verification.md)。
-- [产品决策简报](docs/portfolio/product-decision-brief.md)：先看目标用户、关键取舍、被否决方案和当前 P0。
-- [创作 Agent](docs/creative-agent.md)：查看简报补全、候选生成、人工确认、状态恢复与安全约束。
-- [运营分析 Agent](docs/portfolio/operations-agent.md)：查看只读工具、证据引用和人工升级门槛。
-- [受治理策略桥接层](docs/strategy-governance.md)：查看策略版本、证据门禁、创作绑定和观察性分析边界。
-- [60 个固定案例与评测方法](docs/evidence/README.md)：20 个主题 × 3 个平台，用于复核评测流程，不代表真实用户效果。
-- [数据存储与安全边界](SECURITY.md)：查看生产存储、权限、配额、密钥扫描和依赖审计说明。
-- [一页产品策略](docs/product/product-strategy.md)：查看北极星指标、竞品事实矩阵与分阶段路线图。
-- [作品集验收与简历对齐记录](docs/portfolio/acceptance-and-resume-alignment.md)：查看证据分级、门禁结果字段和未验证主张的同步规则。
-- [产品经理 HR 最终评分卡](docs/portfolio/pm-hr-final-scorecard.md)：查看实习面试结论、分项评分、90 秒演示顺序与诚实边界。
-- [真实创作者研究执行包](docs/product/real-user-research-kit.md)：查看招募、知情同意、主持、观察、退出和脱敏流程；材料已就绪，研究尚未执行。
-- [产品经理面试交付包](docs/portfolio/interview-delivery-kit.md)：查看 90 秒逐字稿、5 分钟展开版、简历表述、问答与演示兜底。
+- **项目背景**：[产品决策简报](docs/portfolio/product-decision-brief.md)说明目标用户、核心问题、关键取舍与当前优先级。
+- **真实证据**：[公开证据索引](docs/evidence/README.md)集中列出可复核事实、证据来源、主张状态和明确缺口。
+- **产品流程**：[创作 Agent 文档](docs/creative-agent.md)说明从结构化简报、候选生成、人工选择到反馈闭环的完整流程。
+- **版本决策**：[版本迭代记录](docs/product/iteration-log.md)记录问题证据、方案取舍、发布门槛与下一步决策。
+- **评测结果**：[离线评测报告](docs/evidence/offline-evaluation-report.md)与[受控测试报告](docs/evidence/controlled-test-report.md)展示固定案例、评测口径和当前结果边界。
+- **本人与 AI 分工**：[本人判断与 AI 协作边界](docs/portfolio/ai-collaboration.md)说明本人负责的判断、AI 协助范围与人工验收方式。
+- **Demo 与核心文档**：[Demo 验证记录](docs/portfolio/demo-verification.md)、[产品策略](docs/product/product-strategy.md)、[策略治理](docs/strategy-governance.md)与[安全边界](SECURITY.md)。
 
 ## 本人与 AI 的分工
 
@@ -344,7 +339,6 @@ docs/portfolio/         招聘方入口、AI 协作边界与 Demo 记录
 - [公开证据索引](docs/evidence/README.md)
 - [真实创作者验证计划](docs/product/real-user-validation-plan.md)
 - [真实创作者研究执行包](docs/product/real-user-research-kit.md)
-- [产品经理面试交付包](docs/portfolio/interview-delivery-kit.md)
 - [AI 治理说明](docs/product/ai-governance.md)
 - [证据指标字典](docs/evidence/metrics-dictionary.md)
 - [业务闭环](docs/product/business-chain.md)
