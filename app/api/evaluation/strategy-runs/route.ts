@@ -51,7 +51,7 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ ok: true, run: runSummary(run) }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "策略评测创建失败" },
+      { ok: false, error: error instanceof Error ? error.message : "策略评测没有创建成功，请重新尝试。" },
       { status: 400 },
     );
   }

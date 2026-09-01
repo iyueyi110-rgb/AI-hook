@@ -23,14 +23,14 @@ const copyByTrigger: Record<
   { eyebrow: string; title: string; description: string }
 > = {
   adoption: {
-    eyebrow: "采用反馈",
-    title: "这条 Hook 会怎么用？",
-    description: "真实使用方式能帮助我们区分“看起来不错”和“真正能用”。",
+    eyebrow: "使用方式",
+    title: "这个开头准备怎么用？",
+    description: "告诉我们是直接使用、修改后使用，还是只参考思路。",
   },
   explicit_batch_reject: {
     eyebrow: "放弃原因",
-    title: "这批 Hook 为什么不合适？",
-    description: "选出最主要的原因，帮助下一轮更接近你的创作需求。",
+    title: "这批开头为什么不合适？",
+    description: "选出最主要的原因，下一批会按这些信息重新生成。",
   },
   sampled_before_regenerate: {
     eyebrow: "快速反馈",
@@ -39,7 +39,7 @@ const copyByTrigger: Record<
   },
   low_satisfaction: {
     eyebrow: "低分原因",
-    title: "这条 Hook 主要差在哪里？",
+    title: "这个开头主要差在哪里？",
     description: "评分已经保存，再补一个原因会让问题更容易定位。",
   },
 };

@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import type { HistoryItem } from "@/lib/types";
 import { CONTENT_TYPE_CONFIG, PLATFORM_CONFIG } from "@/lib/constants";
+import { EMPTY_COPY } from "@/content/copy";
 import { DrawerShell } from "./DrawerShell";
 
 interface HistoryDrawerProps {
@@ -58,8 +59,8 @@ export function HistoryDrawer({
         <div className="grid min-h-56 place-items-center px-6 text-center">
           <div>
             <ClockCounterClockwise aria-hidden="true" className="mx-auto text-[var(--color-line-strong)]" size={30} />
-            <p className="mt-4 text-sm font-extrabold">还没有生成记录</p>
-            <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">完成一次生成后，候选会自动保存在这里。</p>
+            <p className="mt-4 text-sm font-extrabold">{EMPTY_COPY.historyTitle}</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">{EMPTY_COPY.historyDescription}</p>
           </div>
         </div>
       ) : (
@@ -109,7 +110,7 @@ export function HistoryDrawer({
                     type="button"
                   >
                     <Heart aria-hidden="true" size={15} weight={item.isFavorited ? "fill" : "bold"} />
-                    {item.isFavorited ? "已收藏" : "收藏本次"}
+                    {item.isFavorited ? "已保留本批" : "保留这一批"}
                   </button>
                   <button
                     className="button-secondary text-[var(--color-danger)]"

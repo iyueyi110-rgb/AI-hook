@@ -1,6 +1,7 @@
 {
   "name": "ai-hook-lab",
   "version": "0.1.0",
+  "description": "面向中文内容创作者的多平台内容开头生成与比较工具，支持批量生成、结果比较、单条改写和最终选择。",
   "type": "module",
   "private": true,
   "engines": {

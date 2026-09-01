@@ -36,7 +36,7 @@ test("preserves the classic ten-hook response contract through the shared servic
   assert.equal(result.platform, request.platform);
   assert.equal(result.contentType, request.contentType);
   assert.equal(result.model, "deepseek-chat");
-  assert.equal(result.templateVersion, "v1.0.0");
+  assert.equal(result.templateVersion, "v1.1.0");
   assert.equal(result.hooks[0]?.clickScore, 70);
   assert.deepEqual(result.analysis, hookPayload(10).analysis);
 });

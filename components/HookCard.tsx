@@ -9,6 +9,7 @@ import {
   Medal,
 } from "@phosphor-icons/react";
 import type { HookResult, PlatformSatisfaction } from "@/lib/types";
+import { RESULT_COPY } from "@/content/copy";
 
 interface HookCardProps {
   hook: HookResult;
@@ -30,10 +31,10 @@ interface HookCardProps {
 }
 
 const scoreLabels: Array<{ key: keyof NonNullable<HookResult["scores"]>; label: string }> = [
-  { key: "impact", label: "冲击力" },
-  { key: "platformFit", label: "平台匹配" },
-  { key: "actionability", label: "可操作性" },
-  { key: "shareability", label: "传播力" },
+  { key: "impact", label: "是否具体" },
+  { key: "platformFit", label: "平台表达" },
+  { key: "actionability", label: "容易理解" },
+  { key: "shareability", label: "主题相关" },
 ];
 
 export function HookCard({
@@ -101,7 +102,7 @@ export function HookCard({
             {featured ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[11px] font-extrabold text-white">
                 <Medal aria-hidden="true" size={14} weight="fill" />
-                最佳候选
+                {RESULT_COPY.rankedFirst}
               </span>
             ) : (
               <span className="text-xs font-black tabular-nums text-[var(--color-muted)]">
@@ -111,13 +112,13 @@ export function HookCard({
             <span className="text-xs font-extrabold text-[var(--color-accent)]">{hook.style}</span>
             {coachActions && recommendationRank && (
               <span className="rounded-full border border-[var(--color-accent)] px-2 py-1 text-[11px] font-extrabold text-[var(--color-accent)]">
-                推荐 {recommendationRank}
+                建议先看 {recommendationRank}
               </span>
             )}
             {hook.adopted && (
               <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success-soft)] px-2 py-1 text-[11px] font-bold text-[var(--color-success)]">
                 <CheckCircle aria-hidden="true" size={13} weight="fill" />
-                已采用
+                {RESULT_COPY.chosenFinal}
               </span>
             )}
           </div>
@@ -129,14 +130,14 @@ export function HookCard({
           <div className="text-2xl font-black leading-none tabular-nums tracking-[-0.04em]">
             {overallScore}
           </div>
-          <div className="mt-1 text-[10px] font-bold text-[var(--color-muted)]">模型分 / 10</div>
+          <div className="mt-1 text-[10px] font-bold text-[var(--color-muted)]">参考分 / 10</div>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button className="button-secondary" onClick={handleCopy} type="button">
           {copied ? <Check aria-hidden="true" size={16} weight="bold" /> : <Copy aria-hidden="true" size={16} weight="bold" />}
-          {copied ? "已复制" : "复制"}
+          {copied ? "已复制" : RESULT_COPY.copy}
         </button>
         {coachActions ? (
           <>
@@ -146,7 +147,7 @@ export function HookCard({
               onClick={() => onRewrite?.(hook.id)}
               type="button"
             >
-              改写这条
+              {RESULT_COPY.rewrite}
             </button>
             <button
               aria-pressed={selected}
@@ -156,7 +157,7 @@ export function HookCard({
               type="button"
             >
               <CheckCircle aria-hidden="true" size={16} weight={selected ? "fill" : "bold"} />
-              {selected ? "已选择" : "选择这条"}
+              {selected ? RESULT_COPY.chosenFinal : RESULT_COPY.chooseFinal}
             </button>
           </>
         ) : (
@@ -168,7 +169,7 @@ export function HookCard({
               type="button"
             >
               <Heart aria-hidden="true" size={16} weight={isFavorited ? "fill" : "bold"} />
-              {isFavorited ? "已收藏" : "收藏"}
+              {isFavorited ? RESULT_COPY.saved : RESULT_COPY.save}
             </button>
             <button
               aria-pressed={Boolean(hook.adopted)}
@@ -177,7 +178,7 @@ export function HookCard({
               type="button"
             >
               <CheckCircle aria-hidden="true" size={16} weight={hook.adopted ? "fill" : "bold"} />
-              {hook.adopted ? "取消采用" : "标记采用"}
+              {hook.adopted ? "取消最终版本" : RESULT_COPY.chooseFinal}
             </button>
           </>
         )}
@@ -192,7 +193,7 @@ export function HookCard({
       {(hook.scores || hook.reasoning || hook.badcaseTags?.length) && (
         <details className="group mt-4 border-t border-[var(--color-line)] pt-3">
           <summary className="cursor-pointer list-none text-xs font-bold text-[var(--color-graphite)] hover:text-[var(--color-ink)]">
-            查看评分与理由
+            查看参考分与理由
             <span aria-hidden="true" className="ml-1 inline-block transition-transform group-open:rotate-45">+</span>
           </summary>
           <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
@@ -223,11 +224,11 @@ export function HookCard({
               )}
             </div>
             {!coachActions && <fieldset>
-              <legend className="text-[11px] font-bold text-[var(--color-muted)]">人工平台适配</legend>
+              <legend className="text-[11px] font-bold text-[var(--color-muted)]">平台表达符合程度</legend>
               <div className="mt-2 flex gap-1">
                 {([1, 2, 3, 4, 5] as PlatformSatisfaction[]).map((rating) => (
                   <button
-                    aria-label={`平台适配满意度 ${rating} 分`}
+                    aria-label={`平台表达符合程度 ${rating} 分`}
                     aria-pressed={hook.platformSatisfaction === rating}
                     className={`grid h-8 w-8 place-items-center rounded-[6px] border text-xs font-bold ${
                       hook.platformSatisfaction === rating

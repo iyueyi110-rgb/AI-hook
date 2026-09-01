@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Hook Lab | AI 爆款 Hook 生成器",
+  title: "AI Hook Lab | 内容开头生成与比较工具",
   description:
-    "输入主题，选择平台和内容类型，AI 一次生成 10 个不同风格的爆款开头 Hook。支持小红书、抖音、B站、YouTube、X。",
-  keywords: ["AI", "Hook", "文案", "爆款", "生成器", "小红书", "抖音", "内容创作"],
+    "面向中文内容创作者的多平台内容开头生成与比较工具，支持批量生成、结果比较、单条改写和最终选择。",
+  keywords: ["内容开头", "Hook", "文案", "生成与比较", "小红书", "抖音", "内容创作"],
 };
 
 export default function RootLayout({

@@ -120,7 +120,7 @@ test("production classic generation fails closed without a valid IP hash secret"
   const response = await handler(post("192.0.2.8"));
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), {
-    error: "服务暂不可用",
-    message: "生成配额未正确配置，请联系管理员",
+    error: "生成服务暂不可用",
+    message: "服务配置尚未完成，请稍后重试或联系维护者。",
   });
 });

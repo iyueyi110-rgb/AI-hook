@@ -185,7 +185,7 @@ function errorResponse(error: unknown): Response {
   if (error instanceof HttpError) return json({ error: "request_error", message: error.message }, error.status);
   if (error instanceof AgentProviderError) return json({ ...error.response, error: error.causeCode, message: error.message }, error.status);
   if (error instanceof AgentConflictError) return json({ error: error.code, message: error.message }, 409);
-  if (error instanceof AgentNotFoundError || error instanceof CreatorSessionNotFoundError) return json({ error: "not_found", message: "Agent run was not found" }, 404);
+  if (error instanceof AgentNotFoundError || error instanceof CreatorSessionNotFoundError) return json({ error: "not_found", message: "没有找到这次开头助手任务，请刷新后重试。" }, 404);
   if (error instanceof AgentInputError || error instanceof AgentMemoryValidationError) return json({ error: "validation", message: error.message }, 400);
   if (error instanceof StrategyInputError) return json({ error: error.message, message: error.message }, 400);
   if (error instanceof StrategyConflictError) return json({ error: error.message, message: error.message }, 409);
@@ -195,13 +195,13 @@ function errorResponse(error: unknown): Response {
   if (error instanceof DatabaseNotConfiguredError) return json({ error: "database_unavailable", message: error.message }, 503);
   const externalCode = error && typeof error === "object" && "code" in error && typeof error.code === "string" ? error.code : "";
   if (["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "57P01", "53300"].includes(externalCode) || externalCode.startsWith("08")) {
-    return json({ error: "database_unavailable", message: "The agent database is temporarily unavailable" }, 503);
+    return json({ error: "database_unavailable", message: "开头助手暂时无法读取任务，请稍后重试。" }, 503);
   }
   if (error instanceof GenerationError) {
     const status = error.code === "rate_limit" ? 429 : error.code === "timeout" ? 504 : error.code === "missing_key" ? 503 : 502;
-    return json({ error: error.code, message: "Generation provider failed" }, status);
+    return json({ error: error.code, message: "这次没有生成成功，请重新尝试。" }, status);
   }
-  return json({ error: "internal_error", message: "The Creative Agent could not process this request" }, 500);
+  return json({ error: "internal_error", message: "开头助手暂时无法处理这个请求，请重新尝试。" }, 500);
 }
 
 export function createAgentHttpHandlers(options: HandlerOptions = {}) {

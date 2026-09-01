@@ -153,8 +153,8 @@ test("ranks a stable Top 3 from model-provided scores and known bad-case tags on
   ]);
 
   assert.deepEqual(result.top3.map((candidate) => candidate.id), ["b", "z", "a"]);
-  assert.match(result.explanations[0] ?? "", /scores|reasoning|bad-case/i);
-  assert.doesNotMatch(result.explanations.join(" "), /click|CTR|performance|表现/i);
+  assert.match(result.explanations[0] ?? "", /参考分|维度|已知问题|理由/);
+  assert.doesNotMatch(result.explanations.join(" "), /点击|CTR|转化|播放|效果最好/i);
 });
 
 test("stores only whitelist memory through revision-checked mutations and lets current briefs override it", () => {

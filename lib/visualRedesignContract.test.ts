@@ -35,16 +35,17 @@ test("editorial workbench exposes shared tokens and navigation", async () => {
 });
 
 test("results and drawers follow the approved product interaction contract", async () => {
-  const [grid, card, drawer, history, favorites] = await Promise.all([
+  const [grid, card, drawer, history, favorites, copy] = await Promise.all([
     source("components/HookGrid.tsx"),
     source("components/HookCard.tsx"),
     source("components/DrawerShell.tsx"),
     source("components/HistoryDrawer.tsx"),
     source("components/FavoritesDrawer.tsx"),
+    source("content/copy.ts"),
   ]);
 
   assert.match(grid, /featured/);
-  assert.match(card, /最佳候选/);
+  assert.match(copy, /排序靠前/);
   assert.match(card, /details/);
   assert.match(drawer, /role="dialog"/);
   assert.match(drawer, /aria-modal="true"/);
@@ -107,9 +108,8 @@ test("dashboard groups metrics around operational decisions", async () => {
 });
 
 test("creator feedback uses an accessible skippable dialog and explicit rejection entry", async () => {
-  const [dialog, grid, home, dashboard] = await Promise.all([
+  const [dialog, home, dashboard] = await Promise.all([
     source("components/CreatorFeedbackDialog.tsx"),
-    source("components/HookGrid.tsx"),
     source("app/page.tsx"),
     source("app/admin/dashboard/DashboardClient.tsx"),
   ]);
@@ -119,7 +119,8 @@ test("creator feedback uses an accessible skippable dialog and explicit rejectio
   assert.match(dialog, /event\.key === "Escape"/);
   assert.match(dialog, /跳过/);
   assert.match(dialog, /maxLength=\{100\}/);
-  assert.match(grid, /这批都不合适/);
+  const copy = await source("content/copy.ts");
+  assert.match(copy, /换一批/);
   assert.match(home, /sampled_before_regenerate/);
   assert.match(home, /low_satisfaction/);
   assert.match(home, /creator_feedback/);

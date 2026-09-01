@@ -7,6 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import type { HistoryItem, HookResult, PlatformSatisfaction } from "@/lib/types";
 import { PLATFORM_CONFIG } from "@/lib/constants";
+import { EMPTY_COPY, RESULT_COPY } from "@/content/copy";
 import { DrawerShell } from "./DrawerShell";
 
 interface FavoritesDrawerProps {
@@ -58,17 +59,17 @@ export function FavoritesDrawer({
 
   return (
     <DrawerShell
-      description={`${favoritedHooks.length} 个可复用候选`}
+      description={`${favoritedHooks.length} 条保留的开头`}
       onClose={onClose}
       open={open}
-      title="收藏夹"
+      title="留下的开头"
     >
       {favoritedHooks.length === 0 ? (
         <div className="grid min-h-56 place-items-center px-6 text-center">
           <div>
             <Heart aria-hidden="true" className="mx-auto text-[var(--color-line-strong)]" size={30} />
-            <p className="mt-4 text-sm font-extrabold">还没有收藏的 Hook</p>
-            <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">在候选中点击收藏，把好开头沉淀为创作资产。</p>
+            <p className="mt-4 text-sm font-extrabold">{EMPTY_COPY.savedTitle}</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">{EMPTY_COPY.savedDescription}</p>
           </div>
         </div>
       ) : (
@@ -96,24 +97,24 @@ export function FavoritesDrawer({
                   type="button"
                 >
                   <CheckCircle aria-hidden="true" size={15} weight={hook.adopted ? "fill" : "bold"} />
-                  {hook.adopted ? "已采用" : "标记采用"}
+                  {hook.adopted ? RESULT_COPY.chosenFinal : RESULT_COPY.chooseFinal}
                 </button>
                 <button
-                  aria-label="取消收藏"
+                  aria-label="不再保留"
                   className="button-secondary border-[var(--color-accent)] text-[var(--color-accent)]"
                   onClick={() => onToggleFavorite(hook.id)}
                   type="button"
                 >
-                  <Heart aria-hidden="true" size={15} weight="fill" />取消收藏
+                  <Heart aria-hidden="true" size={15} weight="fill" />不再保留
                 </button>
               </div>
 
               <fieldset className="mt-4">
-                <legend className="text-[11px] font-bold text-[var(--color-muted)]">人工平台适配</legend>
+                <legend className="text-[11px] font-bold text-[var(--color-muted)]">平台表达符合程度</legend>
                 <div className="mt-2 flex gap-1">
                   {([1, 2, 3, 4, 5] as PlatformSatisfaction[]).map((rating) => (
                     <button
-                      aria-label={`平台适配满意度 ${rating} 分`}
+                      aria-label={`平台表达符合程度 ${rating} 分`}
                       aria-pressed={hook.platformSatisfaction === rating}
                       className={`grid h-8 w-8 place-items-center rounded-[6px] border text-xs font-bold ${
                         hook.platformSatisfaction === rating

@@ -1,3 +1,5 @@
+import { findPromotionalCopyTerms } from "../copyQuality.ts";
+
 export type GenerationErrorCode =
   | "missing_key"
   | "auth"
@@ -171,6 +173,29 @@ function withAttempts(error: GenerationError, attempts: number): GenerationError
   return new GenerationError(error.code, { attempts, status: error.status });
 }
 
+function promotionalTermsInCandidates(candidates: unknown[]): string[] {
+  const terms = candidates.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return [];
+    const text = (candidate as Record<string, unknown>).text;
+    return typeof text === "string" ? findPromotionalCopyTerms(text) : [];
+  });
+  return [...new Set(terms)];
+}
+
+function copyRepairPrompt(
+  promptBundle: GenerationPromptBundle,
+  terms: string[],
+): GenerationPromptBundle {
+  return {
+    ...promptBundle,
+    userPrompt: `${promptBundle.userPrompt}
+
+## 上一次结果的文案检查
+检测到宣传式表达：${terms.join("、")}。
+请自然改写命中的句子，保留原意和具体信息，不要只把词语静默删除，也不要加入播放量、转化率、点赞量或获客效果承诺。保持现有 JSON Schema、字段和候选数量不变。`,
+  };
+}
+
 function createDeadline(
   controller: AbortController,
   deadlineAt: number,
@@ -211,6 +236,8 @@ export async function generateCandidates(
   const attemptsAllowed = retryLimit(input.maxRetries) + 1;
   const now = input.now ?? (() => performance.now());
   const deadlineAt = now() + (input.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+  let copyRewriteAttempted = false;
+  let copyRepairTerms: string[] = [];
 
   for (let attempt = 1; attempt <= attemptsAllowed; attempt += 1) {
     input.onAttempt?.(attempt);
@@ -220,7 +247,9 @@ export async function generateCandidates(
       const generated = await Promise.race([
         Promise.resolve().then(() =>
           provider.generate({
-            promptBundle: input.promptBundle,
+            promptBundle: copyRepairTerms.length
+              ? copyRepairPrompt(input.promptBundle, copyRepairTerms)
+              : input.promptBundle,
             temperature: input.temperature,
             maxTokens: input.maxTokens,
             signal: controller.signal,
@@ -233,6 +262,13 @@ export async function generateCandidates(
 
       if (!Array.isArray(candidates) || candidates.length !== input.expectedCount) {
         throw new GenerationError("invalid_count");
+      }
+
+      const promotionalTerms = promotionalTermsInCandidates(candidates);
+      if (promotionalTerms.length > 0 && !copyRewriteAttempted && attempt < attemptsAllowed) {
+        copyRewriteAttempted = true;
+        copyRepairTerms = promotionalTerms;
+        continue;
       }
 
       return { payload, candidates, attempts: attempt };

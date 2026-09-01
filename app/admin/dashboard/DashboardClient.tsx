@@ -107,8 +107,8 @@ function formatEventType(type: string): string {
     generation_start: "生成开始",
     generation_complete: "生成完成",
     generation_error: "生成失败",
-    hook_copied: "复制 Hook",
-    hook_favorited: "收藏 Hook",
+    hook_copied: "复制开头",
+    hook_favorited: "保留开头",
     hook_unfavorited: "取消收藏",
     hook_adopted: "标记采用",
     hook_unadopted: "取消采用",
@@ -285,7 +285,7 @@ export function DashboardClient({
         setCandidateSummary((await candidateResponse.json()) as CandidateAnalyticsSummary);
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "加载失败");
+      setError(cause instanceof Error ? cause.message : "数据暂时没有加载成功，请重新尝试。");
     } finally {
       setLoading(false);
     }
@@ -304,7 +304,7 @@ export function DashboardClient({
             icon: <CheckCircle aria-hidden="true" size={17} weight="bold" />,
           },
           {
-            label: "生成 Hook 数",
+            label: "生成开头数",
             value: String(summary.totals.hooksGenerated),
             hint: `${summary.totals.generationsCompleted} 组生成`,
             icon: <ChartLineUp aria-hidden="true" size={17} weight="bold" />,
@@ -613,7 +613,7 @@ export function DashboardClient({
                   <th className="px-4 py-3 font-bold">数据来源</th>
                   <th className="px-4 py-3 font-bold">平台</th>
                   <th className="px-4 py-3 font-bold">结果</th>
-                  <th className="px-4 py-3 font-bold">Hook</th>
+                  <th className="px-4 py-3 font-bold">开头</th>
                 </tr>
               </thead>
               <tbody>

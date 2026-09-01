@@ -69,7 +69,7 @@ function errorView(error: unknown): CreativeCoachError {
   }
   if (error instanceof CoachClientError) {
     return {
-      title: error.status === 409 ? "状态已更新" : "教练操作未完成",
+      title: error.status === 409 ? "状态已更新" : "这次操作没有完成",
       message: error.status === 409
         ? "检测到另一项操作或旧页面提交，已刷新到最新状态。请确认后再继续。"
         : error.message,

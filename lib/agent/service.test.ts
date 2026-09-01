@@ -437,17 +437,17 @@ test("clarifies one required field at a time and stops after two questions", asy
   const missingTopic = await coach.createRun(undefined, {
     brief: { platform: "xiaohongshu", contentType: "video" },
   });
-  assert.match(missingTopic.response.messages.at(-1)?.content ?? "", /主题/);
+  assert.match(missingTopic.response.messages.at(-1)?.content ?? "", /主要想讲什么/);
 
   const created = await coach.createRun(undefined, { brief: { topic: "AI 周报" } });
   const token = created.sessionToken;
   const runId = created.response.run.id;
   assert.equal(created.response.run.clarificationAttempts, 1);
-  assert.match(created.response.messages.at(-1)?.content ?? "", /平台/);
+  assert.match(created.response.messages.at(-1)?.content ?? "", /准备发到哪里/);
 
   const second = await coach.submitTurn(token, runId, 0, { type: "message", text: "douyin" });
   assert.equal(second.run.clarificationAttempts, 2);
-  assert.match(second.messages.at(-1)?.content ?? "", /内容类型/);
+  assert.match(second.messages.at(-1)?.content ?? "", /内容是什么形式/);
 
   const ready = await coach.submitTurn(token, runId, 1, { type: "message", text: "video" });
   assert.equal(ready.run.status, "awaiting_brief_confirmation");
@@ -459,7 +459,7 @@ test("clarifies one required field at a time and stops after two questions", asy
   const invalid2 = await coach.submitTurn(exhausted.sessionToken, exhausted.response.run.id, 1, { type: "message", text: "still-invalid" });
   assert.equal(invalid2.run.requiresFormCompletion, true);
   assert.equal(invalid2.needsInput, true);
-  assert.equal(invalid2.messages.at(-1)?.content, "请先补全创作简报，再继续生成。");
+  assert.equal(invalid2.messages.at(-1)?.content, "目前的信息还不够，请先补充内容主题、发布平台或内容形式。");
   assert.doesNotMatch(invalid2.messages.at(-1)?.content ?? "", /Please|structured brief/i);
   assert.equal(invalid1.run.clarificationAttempts, 2);
   assert.equal(invalid2.run.clarificationAttempts, 2);

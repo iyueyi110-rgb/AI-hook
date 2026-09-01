@@ -23,6 +23,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
     await service.persistStrategyEvidence(actor.id, runId);
     return NextResponse.json(report);
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "报告生成失败" }, { status: 400 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "报告没有生成成功，请重新尝试。" }, { status: 400 });
   }
 }

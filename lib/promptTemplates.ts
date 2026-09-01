@@ -1,4 +1,5 @@
 import type { EmotionTone, GenerateRequest, HookScores } from "./types";
+import { findPromotionalCopyTerms } from "./copyQuality";
 import {
   CONTENT_TYPE_CONFIG,
   EMOTION_TONE_CONFIG,
@@ -7,7 +8,7 @@ import {
 } from "./constants";
 
 export const GENERATION_MODEL = "deepseek-chat";
-export const PROMPT_TEMPLATE_VERSION = "v1.0.0";
+export const PROMPT_TEMPLATE_VERSION = "v1.1.0";
 export const DEFAULT_PROMPT_VARIANT = "candidate";
 export const DEFAULT_WORD_LIMIT = 80;
 export const MAX_TOPIC_LENGTH = 120;
@@ -24,24 +25,36 @@ export interface PromptBundle {
 }
 
 export function buildSystemPrompt(promptVariant = DEFAULT_PROMPT_VARIANT): string {
-  return `你是一位社交媒体文案策略师，专门帮助短视频/图文创作者解决开头 3 秒吸引力不足、平台语气难迁移、灵感难复用的问题。
+  return `你是一位中文内容编辑，帮助创作者为视频、图文或社交内容撰写内容开头（Hook）。这里的开头是吸引用户继续观看或阅读的一两句话。
 
-你的任务：根据输入变量，为指定平台生成 10 个不同风格的 Hook 开头，并给出可比较、可解释的评分。
+你的任务：根据用户提供的信息，为指定平台生成 10 个有明显差异的开头，并给出便于比较的参考分和具体理由。不要把参考分解释为真实播放、转化、点赞或获客效果。
 
 当前 Prompt 模板版本：${PROMPT_TEMPLATE_VERSION}
 当前 Prompt 变体：${promptVariant}
 
-好 Hook 的四条标准：
-1. 前 3 秒钩子：开头 15 字内制造好奇心缺口、认知冲突或情绪共振。
-2. 平台原生感：读起来像该平台创作者的真实表达，不是翻译腔或通用广告文案。
-3. 可操作性：读者能清晰预期后续内容会提供什么价值。
-4. 传播基因：包含适合截图、引用、复用的表达。
+生成要求：
+1. 使用具体、自然的中文，像真实内容创作者说话，不写产品宣传稿。
+2. 每条只表达一个核心信息，读者能明白后续内容准备讲什么。
+3. 避免连续堆叠抽象名词，不使用“赋能、闭环、全链路、一站式、精准高效、全面提升”等表达。
+4. 不承诺播放量、转化率、点赞量、获客数量或“爆款”结果。
+5. 10 条开头必须在角度、信息组织或语气上有明显差异，不能只替换同义词。
+6. 根据目标平台调整句子长短、信息密度和语气，但不要刻板模仿，也不要堆砌平台黑话。
+7. 不编造数据、经历、身份、案例或用户没有提供的事实。
+8. 信息不足时，在 analysis.improvementTip 中指出还缺少什么，不自行补充虚假事实。
+9. reasoning 必须引用开头中的具体词句，并解释它如何对应主题、受众或平台。
+10. 保持约定的 JSON Schema、字段名和候选数量不变。
+
+正反例：
+- 不推荐：“通过智能化能力赋能创作者，实现高效精准的内容生产。”
+- 推荐：“同一条内容，发到小红书和抖音，开头应该怎么改？”
+- 不推荐：“这三个方法将全面提升你的内容转化率。”
+- 推荐：“如果开头总被划走，可以先检查这三个地方。”
 
 四维评分标准（每维 1-10 分）：
-- impact：开头是否有足够冲击力、信息差或情绪张力。
-- platformFit：语气、节奏、词汇是否贴合平台。
-- actionability：用户是否能判断后续内容价值。
-- shareability：是否有可被收藏、转发、截图的表达。
+- impact：表达是否具体，核心信息是否清楚；不要按夸张程度打分。
+- platformFit：句子长度、语气和信息密度是否符合目标平台的常见表达习惯。
+- actionability：是否容易理解，读者能否判断后续内容会讲什么。
+- shareability：是否紧扣主题，且没有空泛宣传或无法验证的承诺。
 
 输出要求：
 - 只返回纯 JSON，不要 Markdown，不要解释性前后缀。
@@ -74,17 +87,17 @@ export function buildUserPrompt(
 **平台：** ${platformLabel}（${platformDesc}）
 **内容类型：** ${contentTypeLabel}
 **目标用户：** ${targetAudience?.trim() || "该平台泛用户群体"}${toneInstruction}
-**字数限制：** 每条 Hook 不超过 ${wordLimit ?? DEFAULT_WORD_LIMIT} 字
+**字数限制：** 每条开头不超过 ${wordLimit ?? DEFAULT_WORD_LIMIT} 字
 
 ## 平台风格池
-每种风格生成 1 个 Hook，共 10 个：
+每种风格生成 1 个开头，共 10 个：
 ${styles.map((style, index) => `${index + 1}. ${style}`).join("\n")}
 
 ## 输出 JSON 格式
 {
   "hooks": [
     {
-      "text": "Hook 文案",
+      "text": "开头文案",
       "style": "风格名称（必须从风格池中取）",
       "reasoning": "具体到词句的推荐理由，30-60字",
       "scores": {
@@ -97,9 +110,9 @@ ${styles.map((style, index) => `${index + 1}. ${style}`).join("\n")}
     }
   ],
   "analysis": {
-    "bestStyle": "这批中最值得优先采用的风格",
-    "commonPattern": "这批 Hook 的共性规律，一句话",
-    "improvementTip": "如果效果不理想，下一轮应该调整的输入变量"
+    "bestStyle": "按本次参考分排序靠前的风格，不代表真实传播效果",
+    "commonPattern": "这批开头的共同特点，一句话",
+    "improvementTip": "下一轮可以补充或调整的输入信息"
   }
 }
 
@@ -107,12 +120,14 @@ ${styles.map((style, index) => `${index + 1}. ${style}`).join("\n")}
 - hooks 必须恰好 10 个，每个风格只用一次。
 - text 必须控制在字数限制内。
 - overallScore 是四维评分的综合分，整数 1-10。
-- 平台语气要明显区分，不能把同一句话换平台名复用。
-- reasoning 必须引用 Hook 中的具体词句，禁止空泛套话。
+- 平台表达要有区别，但不能靠堆砌平台黑话制造差异。
+- reasoning 必须引用开头中的具体词句，禁止空泛套话。
+- 每条只保留一个核心信息，不得编造输入中没有的数据、身份或经历。
+- 不得承诺播放量、转化率、点赞量、获客数量或爆款结果。
 - 只返回 JSON。
 ${
   promptVariant === "candidate"
-    ? "- candidate 变体额外要求：前 15 字必须出现具体对象、数字、反差或明确情绪之一；reasoning 必须逐字引用 Hook；避免同一开头句式重复超过 2 次。"
+    ? "- candidate 变体额外要求：前 15 字优先出现具体对象、明确问题、真实处境或可核实数字之一；reasoning 必须逐字引用开头；同一开头句式不得重复超过 2 次。"
     : ""
 }`;
 }
@@ -184,6 +199,7 @@ export function detectBadcases(hook: {
   }
 
   if (hook.scores.platformFit <= 5) tags.push("platform_mismatch");
+  if (findPromotionalCopyTerms(hook.text).length > 0) tags.push("promotional_tone");
 
   return [...new Set(tags)];
 }

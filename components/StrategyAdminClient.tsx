@@ -32,7 +32,7 @@ const STATUS_LABEL: Record<StrategyVersion["status"], string> = {
 
 async function responseJson(response: Response) {
   const body = await response.json() as { error?: string; message?: string };
-  if (!response.ok) throw new Error(body.message ?? body.error ?? "操作失败");
+  if (!response.ok) throw new Error(body.message ?? body.error ?? "这次操作没有完成，请重新尝试。");
   return body;
 }
 
@@ -49,7 +49,7 @@ export function StrategyAdminClient({ readOnly = false }: { readOnly?: boolean }
       setItems(body.strategies ?? []);
       setError("");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "读取失败");
+      setError(caught instanceof Error ? caught.message : "策略卡暂时没有读取成功，请重新尝试。");
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export function StrategyAdminClient({ readOnly = false }: { readOnly?: boolean }
       event.currentTarget.reset();
       await load();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "创建失败");
+      setError(caught instanceof Error ? caught.message : "草稿没有创建成功，请检查填写内容后重试。");
     }
   }
 
@@ -103,7 +103,7 @@ export function StrategyAdminClient({ readOnly = false }: { readOnly?: boolean }
       }));
       await load();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "操作失败");
+      setError(caught instanceof Error ? caught.message : "这次操作没有完成，请重新尝试。");
     }
   }
 
@@ -116,7 +116,7 @@ export function StrategyAdminClient({ readOnly = false }: { readOnly?: boolean }
       }));
       await load();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "克隆失败");
+      setError(caught instanceof Error ? caught.message : "新版本没有创建成功，请重新尝试。");
     }
   }
 

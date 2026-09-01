@@ -35,6 +35,7 @@ import {
 } from "@/components/CreativeCoachWorkspace";
 import { isCreativeCoachEnabled } from "@/lib/creativeCoachClient";
 import { buildWorkbenchBrief, hooksToSeedCandidates } from "@/lib/creativeWorkbench";
+import { GENERATION_ERROR_COPY, HOME_COPY } from "@/content/copy";
 import {
   ArrowClockwise,
   CheckCircle,
@@ -355,7 +356,10 @@ export default function Home() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError({ title: data.error ?? "生成失败", message: data.message ?? "未知错误" });
+        setError({
+          title: data.error ?? GENERATION_ERROR_COPY.failedTitle,
+          message: data.message ?? GENERATION_ERROR_COPY.failedMessage,
+        });
         setStatus("error");
         track("generation_error", { anonymousCreatorId, taskId, error: "生成失败" });
         return;
@@ -400,8 +404,8 @@ export default function Home() {
       });
     } catch {
       setError({
-        title: "网络错误",
-        message: "无法连接到服务器，请检查网络后重试",
+        title: GENERATION_ERROR_COPY.networkTitle,
+        message: GENERATION_ERROR_COPY.networkMessage,
       });
       setStatus("error");
       track("generation_error", { anonymousCreatorId, taskId, error: "网络错误" });
@@ -703,19 +707,19 @@ export default function Home() {
             <section className="editorial-panel overflow-hidden">
               <div className="grid min-h-[430px] content-between p-5 sm:p-7">
                 <div>
-                  <p className="text-xs font-extrabold text-[var(--color-accent)]">你的候选区</p>
+                  <p className="text-xs font-extrabold text-[var(--color-accent)]">准备生成</p>
                   <h2 className="mt-4 max-w-[14ch] text-3xl font-black leading-[1.05] tracking-[-0.035em] sm:text-4xl">
-                    从十个角度里，选出真正能用的一个。
+                    {HOME_COPY.initialTitle}
                   </h2>
                   <p className="mt-4 max-w-[58ch] text-sm leading-6 text-[var(--color-graphite)]">
-                    生成后，这里会先突出最佳候选，再列出其余版本。模型评分负责解释差异，收藏和采用记录由你决定。
+                    {HOME_COPY.initialDescription}
                   </p>
                 </div>
                 <div className="mt-12 grid gap-px overflow-hidden rounded-[10px] border border-[var(--color-line)] bg-[var(--color-line)] sm:grid-cols-3">
                   {[
-                    { icon: Copy, title: "快速比较", text: "同一主题一次查看 10 种表达。" },
-                    { icon: Heart, title: "沉淀收藏", text: "把高价值 Hook 留作复用资产。" },
-                    { icon: CheckCircle, title: "记录采用", text: "将真实选择反馈到运营复盘。" },
+                    { icon: Copy, title: "放在一起比较", text: "同一主题一次查看 10 种表达。" },
+                    { icon: Heart, title: "先保留下来", text: "看到合适的开头，可以留着以后再用。" },
+                    { icon: CheckCircle, title: "确定最终版本", text: "比较和修改后，再标记最终选择。" },
                   ].map(({ icon: Icon, title, text }) => (
                     <div className="bg-[var(--color-surface)] p-4" key={title}>
                       <Icon aria-hidden="true" className="text-[var(--color-accent)]" size={19} weight="bold" />
@@ -740,7 +744,7 @@ export default function Home() {
               </p>
               <button className="button-secondary mt-5" onClick={handleGenerate} type="button">
                 <ArrowClockwise aria-hidden="true" size={16} weight="bold" />
-                重试生成
+                重新尝试
               </button>
             </section>
           )}
@@ -763,12 +767,12 @@ export default function Home() {
           )}
 
           {status === "done" && (
-            <section aria-label="本地使用指标" className="editorial-panel grid grid-cols-2 overflow-hidden sm:grid-cols-4">
+            <section aria-label="当前浏览器的操作记录" className="editorial-panel grid grid-cols-2 overflow-hidden sm:grid-cols-4">
               {[
                 { label: "生成完成率", value: `${stats.completionRate}%` },
-                { label: "收藏率", value: `${stats.favoriteRate}%` },
-                { label: "采用率", value: `${stats.adoptionRate}%` },
-                { label: "平台适配", value: stats.avgPlatformSatisfaction ? `${stats.avgPlatformSatisfaction}/5` : "暂无" },
+                { label: "保留事件率", value: `${stats.favoriteRate}%` },
+                { label: "最终版本标记率", value: `${stats.adoptionRate}%` },
+                { label: "平台表达评分", value: stats.avgPlatformSatisfaction ? `${stats.avgPlatformSatisfaction}/5` : "暂无" },
               ].map((item) => (
                 <div className="border-b border-r border-[var(--color-line)] p-3.5 last:border-r-0 sm:border-b-0" key={item.label}>
                   <p className="text-[11px] font-bold text-[var(--color-muted)]">{item.label}</p>

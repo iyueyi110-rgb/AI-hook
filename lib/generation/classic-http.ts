@@ -23,6 +23,7 @@ import {
 import { mapGenerationError } from "./http.ts";
 import { classicGenerationQuotaFromEnv } from "./quota.ts";
 import { GenerationError } from "./service.ts";
+import { GENERATION_ERROR_COPY } from "../../content/copy.ts";
 
 interface ClassicGenerateHandlerOptions {
   env?: NodeJS.ProcessEnv;
@@ -97,7 +98,7 @@ export function createClassicGenerateHandler(options: ClassicGenerateHandlerOpti
       body = parsed as GenerateRequest;
     } catch {
       return json(
-        { error: "请求格式错误", message: "请提供有效的 JSON 请求体" },
+        { error: "提交的信息不完整", message: "请刷新页面后重新填写并尝试。" },
         400,
       );
     }
@@ -144,20 +145,20 @@ export function createClassicGenerateHandler(options: ClassicGenerateHandlerOpti
       }
       if (error instanceof AgentQuotaError) {
         return json(
-          { error: "请求过于频繁", message: "经典生成次数已达上限，请稍后再试" },
+          { error: "尝试次数较多", message: "这一时段的生成次数已用完，请稍后再试。" },
           429,
           { "Retry-After": String(error.retryAfterSeconds) },
         );
       }
       if (error instanceof RequestIdentityConfigError || unavailablePersistence(error)) {
         return json(
-          { error: "服务暂不可用", message: "生成配额未正确配置，请联系管理员" },
+          { error: "生成服务暂不可用", message: "服务配置尚未完成，请稍后重试或联系维护者。" },
           503,
         );
       }
       if (error instanceof GenerationError) return providerError(error);
       return json(
-        { error: "生成失败", message: "生成结果无法处理，请重试" },
+        { error: GENERATION_ERROR_COPY.failedTitle, message: GENERATION_ERROR_COPY.failedMessage },
         500,
       );
     }

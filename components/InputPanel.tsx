@@ -23,6 +23,7 @@ import {
   PLATFORM_CONFIG,
 } from "@/lib/constants";
 import { MAX_TOPIC_LENGTH } from "@/lib/promptTemplates";
+import { FORM_COPY, HOME_COPY } from "@/content/copy";
 
 interface InputPanelProps {
   topic: string;
@@ -100,13 +101,13 @@ export function InputPanel({
       <div className="border-b border-[var(--color-line)] p-5 md:p-6">
         <div className="flex items-center gap-2 text-xs font-extrabold text-[var(--color-accent)]">
           <MagicWand aria-hidden="true" size={16} weight="bold" />
-          创作简报
+          {HOME_COPY.productDefinition}
         </div>
         <h1 className="mt-4 max-w-[11ch] text-[2.2rem] font-black leading-[0.98] tracking-[-0.035em] text-balance sm:text-[2.55rem] lg:text-[2.25rem]">
-          写出能停住手指的开头。
+          {HOME_COPY.title}
         </h1>
         <p className="mt-3 max-w-[46ch] text-sm leading-6 text-[var(--color-graphite)]">
-          给出主题与平台，生成 10 个可比较、可复用的 Hook 候选。
+          {HOME_COPY.subtitle}
         </p>
       </div>
 
@@ -221,7 +222,7 @@ export function InputPanel({
         </div>
 
         <div>
-          <FieldLabel htmlFor="topic">主题</FieldLabel>
+          <FieldLabel htmlFor="topic">{FORM_COPY.topicLabel}</FieldLabel>
           <div className="relative">
             <textarea
               autoFocus
@@ -235,7 +236,7 @@ export function InputPanel({
                   onGenerate();
                 }
               }}
-              placeholder="例如：AI 写周报、早起打卡、二手车避坑"
+              placeholder={FORM_COPY.topicPlaceholder}
               value={topic}
             />
             <span className="absolute bottom-2.5 right-3 text-[11px] font-semibold tabular-nums text-[var(--color-muted)]">
@@ -246,7 +247,7 @@ export function InputPanel({
 
         <fieldset aria-labelledby={platformLabelId}>
           <legend className="mb-2 text-xs font-extrabold" id={platformLabelId}>
-            发布平台
+            {FORM_COPY.platformLabel}
           </legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-2">
             {(Object.keys(PLATFORM_CONFIG) as Platform[]).map((item) => {
@@ -272,7 +273,7 @@ export function InputPanel({
 
         <fieldset aria-labelledby={contentLabelId}>
           <legend className="mb-2 text-xs font-extrabold" id={contentLabelId}>
-            内容类型
+            {FORM_COPY.contentTypeLabel}
           </legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-2">
             {(Object.keys(CONTENT_TYPE_CONFIG) as ContentType[]).map((item) => {
@@ -306,7 +307,7 @@ export function InputPanel({
           >
             <span className="flex items-center gap-2">
               <SlidersHorizontal aria-hidden="true" size={16} weight="bold" />
-              高级选项
+              补充信息（可选）
             </span>
             <CaretDown
               aria-hidden="true"
@@ -319,13 +320,13 @@ export function InputPanel({
           {advancedOpen && (
             <div className="mt-4 space-y-4">
               <div>
-                <FieldLabel htmlFor="target-audience">目标用户</FieldLabel>
+                <FieldLabel htmlFor="target-audience">{FORM_COPY.audienceLabel}</FieldLabel>
                 <input
                   className="control-base h-11 w-full px-3.5 text-sm placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)]"
                   disabled={loading}
                   id="target-audience"
                   onChange={(event) => setTargetAudience(event.target.value)}
-                  placeholder="例如：新手产品经理"
+                  placeholder={FORM_COPY.audiencePlaceholder}
                   type="text"
                   value={targetAudience}
                 />
@@ -333,7 +334,7 @@ export function InputPanel({
 
               <div>
                 <FieldLabel htmlFor="word-limit">
-                  字数限制 <span className="text-[var(--color-accent)]">{wordLimit} 字</span>
+                  {FORM_COPY.lengthLabel} <span className="text-[var(--color-accent)]">{wordLimit} 字</span>
                 </FieldLabel>
                 <input
                   className="w-full accent-[var(--color-accent)]"
@@ -354,7 +355,7 @@ export function InputPanel({
 
               <fieldset aria-labelledby={emotionLabelId}>
                 <legend className="mb-2 text-xs font-extrabold" id={emotionLabelId}>
-                  情绪风格
+                  {FORM_COPY.toneLabel}
                 </legend>
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -364,7 +365,7 @@ export function InputPanel({
                     onClick={() => setEmotionTone("")}
                     type="button"
                   >
-                    自动
+                    不限
                   </button>
                   {(Object.keys(EMOTION_TONE_CONFIG) as EmotionTone[]).map((tone) => (
                     <button
@@ -395,7 +396,7 @@ export function InputPanel({
           type="button"
         >
           <MagicWand aria-hidden="true" size={18} weight="bold" />
-          {loading ? "正在生成 10 个候选" : "生成 10 个候选"}
+          {loading ? FORM_COPY.generating : FORM_COPY.generate}
         </button>
         {coachEnabled && (
           <button
@@ -405,7 +406,7 @@ export function InputPanel({
             type="button"
           >
             <ChatCircleDots aria-hidden="true" size={17} weight="bold" />
-            不确定怎么写？帮我梳理
+            不确定怎么写？一起补充
           </button>
         )}
         <p className="text-center text-[11px] leading-4 text-[var(--color-muted)]">

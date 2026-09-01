@@ -17,8 +17,8 @@ test("maps generation errors to the classic error payload without a code field",
   const response = mapGenerationError(new GenerationError("invalid_json"));
 
   assert.deepEqual(response, {
-    error: "生成结果异常",
-    message: "本次结果未能正确处理，请重试。",
+    error: "生成结果格式不完整",
+    message: "生成结果格式不完整，系统已自动重试。请重新尝试。",
     status: 500,
   });
   assert.equal("code" in response, false);
@@ -38,8 +38,8 @@ test("maps an empty HTTP 200 model response to the classic 500 payload", () => {
   const response = mapGenerationError(new GenerationError("empty_response"));
 
   assert.deepEqual(response, {
-    error: "生成结果异常",
-    message: "本次没有获得有效结果，请重试。",
+    error: "这次没有生成成功",
+    message: "这次没有生成成功，请重新尝试。",
     status: 500,
   });
 });
@@ -63,8 +63,8 @@ test("maps unavailable and authentication failures to safe operator-facing messa
 
 test("maps invalid candidate counts to a user-readable recovery message", () => {
   assert.deepEqual(mapGenerationError(new GenerationError("invalid_count")), {
-    error: "生成结果不完整",
-    message: "本次未生成完整的 10 条候选，请重试。",
+    error: "生成结果格式不完整",
+    message: "生成结果格式不完整，系统已自动重试。请重新尝试。",
     status: 500,
   });
 });

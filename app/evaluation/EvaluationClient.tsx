@@ -56,7 +56,7 @@ export function EvaluationClient({
     const form = new FormData(event.currentTarget);
     const response = await fetch("/api/evaluation/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
     const result = await response.json();
-    if (!response.ok) return setError(result.error ?? "账号创建失败");
+    if (!response.ok) return setError(result.error ?? "账号没有创建成功，请检查填写内容后重试。");
     router.refresh();
   }
 
@@ -85,7 +85,7 @@ export function EvaluationClient({
       }),
     });
     const result = await response.json();
-    if (!response.ok) return setError(result.error ?? "批次创建失败");
+    if (!response.ok) return setError(result.error ?? "评测批次没有创建成功，请检查填写内容后重试。");
     router.push(`/evaluation/runs/${result.run.id}`);
   }
 
@@ -97,7 +97,7 @@ export function EvaluationClient({
       body: JSON.stringify({ ...Object.fromEntries(form), modelName: "deepseek-chat", modelParameters: { temperature: 0.7 } }),
     });
     const result = await response.json();
-    if (!response.ok) return setError(result.error ?? "Prompt 创建失败");
+    if (!response.ok) return setError(result.error ?? "Prompt 版本没有创建成功，请检查填写内容后重试。");
     router.refresh();
   }
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildPromptBundle,
+  detectBadcases,
   GENERATION_MODEL,
   MAX_IMAGE_DESCRIPTION_LENGTH,
 } from "./promptTemplates.ts";
@@ -51,4 +52,17 @@ test("the shared classic service trims, validates and preserves imageDescription
     () => normalizeClassicRequest({ ...request, imageDescription: "x".repeat(MAX_IMAGE_DESCRIPTION_LENGTH + 1) }),
     (error: unknown) => error instanceof ClassicRequestError && error.title === "图片描述过长"
   );
+});
+
+test("marks promotional wording after the single rewrite opportunity without altering the copy", () => {
+  const text = "用一站式方法全面提升内容效果";
+  const tags = detectBadcases({
+    text,
+    reasoning: "理由具体说明了开头中的方法和结果表达",
+    scores: { impact: 7, platformFit: 7, actionability: 7, shareability: 7 },
+    wordLimit: 80,
+  });
+
+  assert.ok(tags.includes("promotional_tone"));
+  assert.equal(text, "用一站式方法全面提升内容效果");
 });

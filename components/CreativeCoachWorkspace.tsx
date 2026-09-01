@@ -33,9 +33,9 @@ const STATUS_LABELS: Record<AgentRunStatus, string> = {
   understanding: "正在梳理需求",
   analyzing_image: "正在分析图片",
   awaiting_brief_confirmation: "等待确认简报",
-  generating: "正在生成候选",
-  reviewing: "正在比较候选",
-  revising: "正在改写候选",
+  generating: "正在生成开头",
+  reviewing: "正在比较开头",
+  revising: "正在改写开头",
   awaiting_final_confirmation: "等待最终确认",
   completed: "本轮已完成",
   failed: "需要重试",
@@ -451,7 +451,7 @@ export const CreativeCoachWorkspace = React.forwardRef<
           <span>
             <span className="block text-xs font-black">本轮忽略策略</span>
             <span className="mt-1 block text-[10px] text-[var(--color-muted)]">
-              不影响创作 Agent 的原有确认、改写和最终确认流程。
+              不影响开头助手的确认、改写和最终选择流程。
             </span>
           </span>
         </label>
@@ -462,7 +462,7 @@ export const CreativeCoachWorkspace = React.forwardRef<
   return open ? (
     <>
       <button
-        aria-label="关闭创作 Agent 遮罩"
+        aria-label="关闭开头助手遮罩"
         className="fixed inset-0 z-40 bg-black/25"
         onClick={close}
         type="button"
@@ -479,14 +479,14 @@ export const CreativeCoachWorkspace = React.forwardRef<
           <div>
             <p className="flex items-center gap-2 text-xs font-extrabold text-[var(--color-accent)]">
               <ChatCircleDots aria-hidden="true" size={16} weight="bold" />
-              创作 Agent
+              开头助手
             </p>
             <h2 className="mt-1 text-base font-black" id="creative-coach-title">
               {run ? STATUS_LABELS[run.status] : "按需协助本轮创作"}
             </h2>
           </div>
           <button
-            aria-label="关闭创作 Agent 面板"
+            aria-label="关闭开头助手面板"
             className="button-secondary !min-h-8 !p-1.5"
             onClick={close}
             ref={closeButtonRef}
@@ -522,7 +522,7 @@ export const CreativeCoachWorkspace = React.forwardRef<
 
           {!run && !coach.restoring && !coach.error && (
             <p className="rounded-[10px] bg-[var(--color-surface-subtle)] p-3 text-xs leading-5 text-[var(--color-graphite)]">
-              我会沿用左侧创作简报。你可以让我补齐模糊需求，或把当前候选带进来继续比较和改写。
+              我会沿用左侧填写的信息。你可以继续补充，也可以把当前开头带进来比较和改写。
             </p>
           )}
 
@@ -536,7 +536,7 @@ export const CreativeCoachWorkspace = React.forwardRef<
                 type="button"
               >
                 <CheckCircle aria-hidden="true" size={16} weight="bold" />
-                带入当前候选并继续打磨
+                带入当前开头继续比较
               </button>
             </>
           )}
@@ -560,12 +560,12 @@ export const CreativeCoachWorkspace = React.forwardRef<
             <p className="flex items-center gap-2 text-[11px] text-[var(--color-muted)]" key={call.id}>
               <ListChecks aria-hidden="true" size={14} />
               {call.tool === "compare_candidates"
-                ? "候选比较"
+                ? "比较开头"
                 : call.tool === "save_final_choice"
                   ? "保存最终选择"
                   : call.tool === "rewrite_hook"
-                    ? "改写候选"
-                    : "生成候选"}
+                    ? "改写开头"
+                    : "生成开头"}
               ：{call.status === "completed" ? "已完成" : "进行中"}
             </p>
           ))}
@@ -586,7 +586,7 @@ export const CreativeCoachWorkspace = React.forwardRef<
             <section className="rounded-[10px] border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] p-4">
               <p className="text-xs font-extrabold text-[var(--color-accent)]">简报已就绪</p>
               <p className="mt-2 text-xs leading-5 text-[var(--color-graphite)]">
-                确认后会按当前主题、平台和内容类型生成 10 条候选。
+                确认后会按当前主题、平台和内容类型生成 10 个开头。
               </p>
               <div className="mt-3">{strategySelector}</div>
               <button
@@ -596,20 +596,20 @@ export const CreativeCoachWorkspace = React.forwardRef<
                 type="button"
               >
                 <CheckCircle aria-hidden="true" size={16} weight="bold" />
-                确认简报并生成
+                确认信息并生成 10 个开头
               </button>
             </section>
           )}
 
           {candidateHooks.length > 0 && run?.status !== "awaiting_final_confirmation" && (
             <section className="rounded-[10px] border border-[var(--color-line)] p-3">
-              <p className="text-xs font-extrabold">候选已同步到结果区</p>
+              <p className="text-xs font-extrabold">开头已同步到结果区</p>
               <p className="mt-1 text-[11px] leading-5 text-[var(--color-muted)]">
-                可直接在候选卡上改写或选择。这里保留状态、问题和操作记录。
+                可以直接改写或选择。这里保留本轮状态、问题和操作记录。
               </p>
               {recommendedIds.length > 0 && (
                 <p className="mt-2 text-[11px] font-bold text-[var(--color-accent)]">
-                  已标出 Agent 推荐的 Top {recommendedIds.length}
+                  {recommendedIds.length >= 3 ? "建议先看这 3 条" : `建议先看这 ${recommendedIds.length} 条`}
                 </p>
               )}
             </section>
@@ -678,7 +678,7 @@ export const CreativeCoachWorkspace = React.forwardRef<
 
           {current?.pendingConfirmation === "final" && (
             <section className="rounded-[10px] border border-[var(--color-success)]/35 bg-[var(--color-success-soft)] p-4">
-              <p className="text-xs font-extrabold text-[var(--color-success)]">最终确认</p>
+              <p className="text-xs font-extrabold text-[var(--color-success)]">确认最终版本</p>
               {selectedCandidate && (
                 <p className="mt-2 text-sm font-semibold leading-6">{selectedCandidate.text}</p>
               )}
@@ -688,16 +688,16 @@ export const CreativeCoachWorkspace = React.forwardRef<
                 onClick={() => void coach.submitCommand({ type: "confirm_final" })}
                 type="button"
               >
-                确认采用
+                设为最终版本
               </button>
               {allowed(allowedCommands, "message") && (
                 <button
                   className="button-secondary mt-2 w-full"
                   disabled={coach.loading}
-                  onClick={() => void coach.submitCommand({ type: "message", text: "返回候选继续比较" })}
+                  onClick={() => void coach.submitCommand({ type: "message", text: "返回开头列表继续比较" })}
                   type="button"
                 >
-                  返回继续比较
+                  返回开头列表
                 </button>
               )}
             </section>
@@ -741,7 +741,7 @@ export const CreativeCoachWorkspace = React.forwardRef<
 
         {run && needsInput && allowed(allowedCommands, "message") && run.status === "understanding" && (
           <form className="border-t border-[var(--color-line)] p-3" onSubmit={submitMessage}>
-            <label className="sr-only" htmlFor="coach-message">回复创作 Agent</label>
+            <label className="sr-only" htmlFor="coach-message">回复开头助手</label>
             <textarea
               className="control-base min-h-20 w-full resize-none px-3 py-2 text-sm"
               id="coach-message"

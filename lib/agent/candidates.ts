@@ -21,8 +21,8 @@ export function compareCandidates(candidates: Candidate[]): { top3: Candidate[];
   return {
     top3,
     explanations: top3.map((candidate) => {
-      const tags = candidate.badcaseTags.length ? candidate.badcaseTags.join(", ") : "none";
-      return `Candidate ${candidate.id}: score ${candidate.overallScore}; dimensions ${candidate.scores.impact}/${candidate.scores.platformFit}/${candidate.scores.actionability}/${candidate.scores.shareability}; known bad-case tags: ${tags}; reasoning: ${candidate.reasoning}`;
+      const tags = candidate.badcaseTags.length ? candidate.badcaseTags.join("、") : "无";
+      return `开头 ${candidate.id}：参考分 ${candidate.overallScore}；维度 ${candidate.scores.impact}/${candidate.scores.platformFit}/${candidate.scores.actionability}/${candidate.scores.shareability}；已知问题：${tags}；理由：${candidate.reasoning}`;
     }),
   };
 }

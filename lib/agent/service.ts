@@ -314,9 +314,9 @@ function assertActiveOperation(run: StoredAgentRun, operationId: string, kind: N
 
 function questionFor(field: "topic" | "platform" | "contentType"): string {
   const questions = {
-    topic: "这次想创作什么主题？一句话描述即可。",
-    platform: "准备发布到哪个平台？例如小红书、抖音、B站、YouTube 或 X。",
-    contentType: "想做哪种内容类型？例如视频、图文、产品广告、教程或观点帖。",
+    topic: "这条内容主要想讲什么？例如：第一次去重庆旅游，需要注意哪些问题？",
+    platform: "准备发到哪里？例如小红书、抖音、B站、YouTube 或 X。",
+    contentType: "这条内容是什么形式？例如视频、图文、产品介绍、教程或观点帖。",
   } satisfies Record<typeof field, string>;
   return questions[field];
 }
@@ -353,7 +353,7 @@ function applyClarification(
     addedMessages.push({ id: makeId("message"), role: "assistant", content: questionFor(normalized.missing[0] ?? "topic"), createdAt: timestamp });
   } else {
     run.requiresFormCompletion = true;
-    addedMessages.push({ id: makeId("message"), role: "assistant", content: "请先补全创作简报，再继续生成。", createdAt: timestamp });
+    addedMessages.push({ id: makeId("message"), role: "assistant", content: "目前的信息还不够，请先补充内容主题、发布平台或内容形式。", createdAt: timestamp });
   }
   run.messages.push(...addedMessages);
   run.updatedAt = timestamp;

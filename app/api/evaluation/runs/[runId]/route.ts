@@ -16,7 +16,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ run
     if (!run) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ run: actor ? runForUser(run, actor) : runForPublic(run) });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "读取失败" }, { status: 403 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "评测批次暂时没有读取成功，请重新尝试。" }, { status: 403 });
   }
 }
 
@@ -70,6 +70,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ru
     }
     return NextResponse.json({ ok: true, run: runForUser(run, actor) });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "操作失败" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "这次操作没有完成，请重新尝试。" }, { status: 400 });
   }
 }

@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ ok: true, user: publicUser(user) }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "账号创建失败" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "账号没有创建成功，请检查填写内容后重试。" }, { status: 400 });
   }
 }
 

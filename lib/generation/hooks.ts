@@ -19,6 +19,7 @@ import {
   GenerationError,
   type GenerationProvider,
 } from "./service.ts";
+import { GENERATION_ERROR_COPY } from "../../content/copy.ts";
 
 export class ClassicRequestError extends Error {
   readonly title: string;
@@ -81,7 +82,12 @@ export function normalizeClassicRequest(input: GenerateRequest): GenerateRequest
   const targetAudience = input.targetAudience?.trim() ?? "";
   const imageDescription = input.imageDescription?.trim() ?? "";
 
-  if (!topic) throw new ClassicRequestError("主题为空", "请输入一个主题");
+  if (!topic) {
+    throw new ClassicRequestError(
+      GENERATION_ERROR_COPY.insufficientTitle,
+      GENERATION_ERROR_COPY.insufficientMessage,
+    );
+  }
   if (topic.length > MAX_TOPIC_LENGTH) {
     throw new ClassicRequestError("主题过长", `主题最多 ${MAX_TOPIC_LENGTH} 个字符，请缩短后重试`);
   }
@@ -170,7 +176,7 @@ export async function generateClassicHooks(
   try {
     promptBundle = buildPromptBundle(request);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "请求参数不支持";
+    const message = error instanceof Error ? error.message : "当前平台或内容形式暂不支持";
     throw new ClassicRequestError(
       message.includes("平台") ? "平台不支持" : "内容类型不支持",
       message

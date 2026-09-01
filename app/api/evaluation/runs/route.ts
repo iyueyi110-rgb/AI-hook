@@ -19,6 +19,6 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ ok: true, run: runSummary(run) }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "批次创建失败" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "评测批次没有创建成功，请检查填写内容后重试。" }, { status: 400 });
   }
 }

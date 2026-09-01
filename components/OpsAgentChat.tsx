@@ -126,7 +126,7 @@ function AnswerCard({
                           <a className="text-xs font-bold text-[var(--color-accent)] underline" href="/admin/dashboard/strategies">前往审核</a>
                         )}
                         {draftState === "error" && (
-                          <span className="text-xs font-bold text-[var(--color-danger)]">创建失败，请重试</span>
+                          <span className="text-xs font-bold text-[var(--color-danger)]">草稿没有创建成功，请重新尝试</span>
                         )}
                       </div>
                     )}
@@ -187,7 +187,7 @@ export function OpsAgentChat({ readOnly = false }: { readOnly?: boolean }) {
           const next = { sessionId: data.sessionId, revision: data.revision };
           setPointer(next); sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
         }
-        throw new Error(data.message ?? data.error ?? "请求失败");
+        throw new Error(data.message ?? data.error ?? "这次分析没有完成，请重新尝试。");
       }
       const next = { sessionId: data.sessionId, revision: data.revision };
       setPointer(next); sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -208,7 +208,7 @@ export function OpsAgentChat({ readOnly = false }: { readOnly?: boolean }) {
             setPointer(next); sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
           }).catch(() => undefined);
         }
-      } else { setError(caught instanceof Error ? caught.message : "请求失败"); setFailedText(value); }
+      } else { setError(caught instanceof Error ? caught.message : "这次分析没有完成，请重新尝试。"); setFailedText(value); }
     } finally { abortRef.current = null; setLoading(false); inputRef.current?.focus(); }
   }, [loading, pointer, readOnly]);
 
@@ -264,7 +264,7 @@ export function OpsAgentChat({ readOnly = false }: { readOnly?: boolean }) {
             />
           ) : <div className="ml-auto max-w-[80%] rounded-[10px] bg-[var(--color-ink)] px-4 py-3 text-sm leading-6 text-white" key={message.id}>{message.content}</div>)}
           {loading && <div className="editorial-panel flex items-center gap-3 px-4 py-4 text-sm text-[var(--color-muted)]"><span className="soft-pulse h-2.5 w-2.5 rounded-full bg-[var(--color-accent)]" />正在查询并核对数据…</div>}
-          {error && <div className="flex items-start justify-between gap-3 rounded-[10px] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4 text-sm text-[var(--color-danger)]" role="alert"><div className="flex gap-2"><WarningCircle aria-hidden="true" className="mt-0.5 shrink-0" size={17} weight="fill" /><div><p className="font-bold">请求失败</p><p className="mt-1 text-xs">{error}</p></div></div>{failedText && <button className="button-secondary min-h-9" onClick={() => void sendMessage(failedText)} type="button"><ArrowClockwise aria-hidden="true" size={14} />重试</button>}</div>}
+          {error && <div className="flex items-start justify-between gap-3 rounded-[10px] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4 text-sm text-[var(--color-danger)]" role="alert"><div className="flex gap-2"><WarningCircle aria-hidden="true" className="mt-0.5 shrink-0" size={17} weight="fill" /><div><p className="font-bold">这次分析没有完成</p><p className="mt-1 text-xs">{error}</p></div></div>{failedText && <button className="button-secondary min-h-9" onClick={() => void sendMessage(failedText)} type="button"><ArrowClockwise aria-hidden="true" size={14} />重新尝试</button>}</div>}
           <div ref={endRef} />
         </div>
 

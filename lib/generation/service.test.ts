@@ -77,6 +77,57 @@ test("retries invalid JSON and candidate count failures no more than twice", asy
   assert.equal(callCount, 3);
 });
 
+test("asks for one natural-language rewrite when a complete batch contains promotional copy", async () => {
+  const calls: ProviderGenerationInput[] = [];
+  const provider: GenerationProvider = {
+    async generate(input) {
+      calls.push(input);
+      if (calls.length === 1) {
+        const first = payload(3);
+        first.hooks[0]!.text = "这套方法将全面提升你的内容转化率";
+        return first;
+      }
+      return payload(3);
+    },
+  };
+
+  const result = await generateCandidates({
+    promptBundle,
+    expectedCount: 3,
+    provider,
+    maxRetries: 2,
+  });
+
+  assert.equal(result.attempts, 2);
+  assert.equal(calls.length, 2);
+  assert.equal((result.candidates[0] as { text: string }).text, "hook 1");
+  assert.match(calls[1]!.promptBundle.userPrompt, /全面提升/);
+  assert.match(calls[1]!.promptBundle.userPrompt, /保持现有 JSON/);
+});
+
+test("returns a still-flagged repair result without silently deleting copy or retrying forever", async () => {
+  let callCount = 0;
+  const provider: GenerationProvider = {
+    async generate() {
+      callCount += 1;
+      const result = payload(3);
+      result.hooks[0]!.text = "用一站式方案解决内容问题";
+      return result;
+    },
+  };
+
+  const result = await generateCandidates({
+    promptBundle,
+    expectedCount: 3,
+    provider,
+    maxRetries: 2,
+  });
+
+  assert.equal(result.attempts, 2);
+  assert.equal(callCount, 2);
+  assert.equal((result.candidates[0] as { text: string }).text, "用一站式方案解决内容问题");
+});
+
 test("returns a structured invalid_count error after retrying an incorrect count", async () => {
   let callCount = 0;
   const provider: GenerationProvider = {

@@ -34,7 +34,7 @@ export function RunDetailClient({ initialRun, user, adminNavigation }: { initial
     const response = await fetch(`/api/evaluation/runs/${run.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const result = await response.json();
     setBusy(false);
-    if (!response.ok) { setError(result.error ?? "操作失败"); return null; }
+    if (!response.ok) { setError(result.error ?? "这次操作没有完成，请重新尝试。"); return null; }
     setRun(result.run);
     return result.run as EvaluationRunRecord;
   }
@@ -42,7 +42,7 @@ export function RunDetailClient({ initialRun, user, adminNavigation }: { initial
   async function loadReport() {
     const response = await fetch(`/api/evaluation/runs/${run.id}/report`, { cache: "no-store" });
     const result = await response.json();
-    if (!response.ok) return setError(result.error ?? "报告读取失败");
+    if (!response.ok) return setError(result.error ?? "报告暂时没有读取成功，请重新尝试。");
     setReport(result);
   }
 
@@ -52,7 +52,7 @@ export function RunDetailClient({ initialRun, user, adminNavigation }: { initial
     for (let index = 0; index < run.caseCount; index += 1) {
       const response = await fetch(`/api/evaluation/runs/${run.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "generate-next" }) });
       const result = await response.json();
-      if (!response.ok) { setError(result.error ?? "批量生成失败"); break; }
+      if (!response.ok) { setError(result.error ?? "这批内容没有生成成功，请重新尝试。"); break; }
       current = result.run;
       setRun(current);
       const tasks = current.generationTasks ?? [];

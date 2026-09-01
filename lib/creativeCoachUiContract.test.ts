@@ -21,11 +21,12 @@ test("home exposes creative intents without a technical mode switch", async () =
 test("the shared brief and result area expose progressive Agent actions", async () => {
   const input = await source("components/InputPanel.tsx");
   const grid = await source("components/HookGrid.tsx");
-  assert.match(input, /帮我梳理/);
-  assert.match(input, /生成 10 个候选/);
+  const copy = await source("content/copy.ts");
+  assert.match(input, /一起补充/);
+  assert.match(copy, /生成 10 个开头/);
   assert.match(input, /onClarify/);
-  assert.match(grid, /继续打磨/);
-  assert.match(grid, /本轮由创作教练协助/);
+  assert.match(grid, /比较和改写/);
+  assert.match(grid, /本轮由开头助手协助/);
   assert.match(grid, /onPolish/);
 });
 

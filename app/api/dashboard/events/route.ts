@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       {
         ok: false,
         error: "事件写入失败",
-        message: error instanceof Error ? error.message : "未知错误",
+        message: error instanceof Error ? error.message : "这次记录没有保存成功，请重新尝试。",
       },
       { status: 400 }
     );

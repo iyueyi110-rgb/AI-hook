@@ -3,6 +3,7 @@
 import { ChatCircleDots, Check, Copy, Lightbulb, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import type { GenerateResponse, HookResult, PlatformSatisfaction } from "@/lib/types";
+import { RESULT_COPY } from "@/content/copy";
 import { HookCard } from "./HookCard";
 
 interface HookGridProps {
@@ -61,10 +62,16 @@ export function HookGrid({
     const bestScore = best.overallScore ?? best.score ?? 0;
     return score > bestScore ? hook : best;
   }, hooks[0]);
-  const bestHook = coachActions
-    ? hooks.find((hook) => hook.id === coachActions.recommendedIds[0]) ?? scoreBestHook
-    : scoreBestHook;
-  const remainingHooks = hooks.filter((hook) => hook.id !== bestHook.id);
+  const orderedHooks = coachActions
+    ? [
+        ...coachActions.recommendedIds
+          .map((id) => hooks.find((hook) => hook.id === id))
+          .filter((hook): hook is HookResult => Boolean(hook)),
+        ...hooks.filter((hook) => !coachActions.recommendedIds.includes(hook.id)),
+      ]
+    : hooks;
+  const bestHook = orderedHooks[0] ?? scoreBestHook;
+  const remainingHooks = orderedHooks.slice(1);
   const bestIndex = hooks.findIndex((hook) => hook.id === bestHook.id);
 
   const handleCopyAll = async () => {
@@ -91,27 +98,29 @@ export function HookGrid({
       <div className="flex flex-col gap-3 border-b border-[var(--color-line)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
           <h2 className="text-lg font-black tracking-[-0.025em]" id="results-heading">
-            候选 Hook
+            {RESULT_COPY.title}
           </h2>
           {coachAssisted && (
             <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-[var(--color-accent)]/20 bg-[var(--color-accent-soft)] px-2.5 py-1 text-[10px] font-extrabold text-[var(--color-accent)]">
               <ChatCircleDots aria-hidden="true" size={13} weight="bold" />
-              本轮由创作教练协助
+              本轮由开头助手协助
             </p>
           )}
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            {hooks.length} 个候选，{coachActions
+            {hooks.length} 个版本，{coachActions
               ? coachActions.selectedIds.length > 0
                 ? `已加入 ${coachActions.selectedIds.length} 条到右侧对比清单。`
-                : "可以多选加入右侧对比清单，最终选择仍由你决定。"
-              : "模型分用于排序，最终选择由你决定。"}
+                : coachActions.recommendedIds.length >= 3
+                  ? RESULT_COPY.recommended
+                  : "参考分用于排序，最终选择仍由你决定。"
+              : "参考分只用于排序，最终版本由你决定。"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 self-start sm:justify-end">
           {coachEnabled && !coachActions && onPolish && (
             <button className="button-primary" onClick={onPolish} type="button">
               <ChatCircleDots aria-hidden="true" size={16} weight="bold" />
-              继续打磨
+              比较和改写
             </button>
           )}
           <button className="button-secondary" onClick={handleCopyAll} type="button">
@@ -162,10 +171,10 @@ export function HookGrid({
       ))}
 
       <div className="flex flex-col gap-3 border-t border-[var(--color-line)] bg-[var(--color-surface-subtle)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <p className="text-xs leading-5 text-[var(--color-muted)]">没有一条适合？告诉我们最主要的问题，不会删除本轮结果。</p>
+        <p className="text-xs leading-5 text-[var(--color-muted)]">没有合适的？换一批会保留本轮记录。</p>
         <button className="button-secondary shrink-0" disabled={coachActions ? !coachActions.canReject || coachActions.rejecting : false} onClick={onRejectBatch} type="button">
           <WarningCircle aria-hidden="true" size={16} weight="bold" />
-          这批都不合适
+          {RESULT_COPY.regenerate}
         </button>
       </div>
 
@@ -173,17 +182,17 @@ export function HookGrid({
         <div className="border-t border-[var(--color-line)] bg-[var(--color-surface-subtle)] p-4 sm:p-5">
           <div className="flex items-center gap-2 text-xs font-extrabold text-[var(--color-ink)]">
             <Lightbulb aria-hidden="true" size={16} weight="fill" />
-            本轮生成分析
+            这批开头的说明
           </div>
           <dl className="mt-3 grid gap-3 text-xs leading-5 text-[var(--color-graphite)] md:grid-cols-3">
             {analysis.bestStyle && (
-              <div><dt className="font-bold text-[var(--color-ink)]">最佳风格</dt><dd className="mt-1">{analysis.bestStyle}</dd></div>
+              <div><dt className="font-bold text-[var(--color-ink)]">排序靠前的表达</dt><dd className="mt-1">{analysis.bestStyle}</dd></div>
             )}
             {analysis.commonPattern && (
-              <div><dt className="font-bold text-[var(--color-ink)]">共性规律</dt><dd className="mt-1">{analysis.commonPattern}</dd></div>
+              <div><dt className="font-bold text-[var(--color-ink)]">共同特点</dt><dd className="mt-1">{analysis.commonPattern}</dd></div>
             )}
             {analysis.improvementTip && (
-              <div><dt className="font-bold text-[var(--color-ink)]">优化建议</dt><dd className="mt-1">{analysis.improvementTip}</dd></div>
+              <div><dt className="font-bold text-[var(--color-ink)]">下次可以补充</dt><dd className="mt-1">{analysis.improvementTip}</dd></div>
             )}
           </dl>
         </div>

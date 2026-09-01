@@ -1,4 +1,5 @@
 import { GenerationError } from "./service.ts";
+import { GENERATION_ERROR_COPY } from "../../content/copy.ts";
 
 export interface ClassicGenerationErrorResponse {
   error: string;
@@ -24,8 +25,8 @@ export function mapGenerationError(
       };
     case "rate_limit":
       return {
-        error: "请求太频繁",
-        message: "API 调用频率已达上限，请稍后再试",
+        error: "尝试次数较多",
+        message: "生成服务当前较忙，请稍后再试。",
         status: 429,
       };
     case "timeout":
@@ -36,20 +37,20 @@ export function mapGenerationError(
       };
     case "empty_response":
       return {
-        error: "生成结果异常",
-        message: "本次没有获得有效结果，请重试。",
+        error: GENERATION_ERROR_COPY.failedTitle,
+        message: GENERATION_ERROR_COPY.failedMessage,
         status: 500,
       };
     case "invalid_json":
       return {
-        error: "生成结果异常",
-        message: "本次结果未能正确处理，请重试。",
+        error: GENERATION_ERROR_COPY.incompleteTitle,
+        message: GENERATION_ERROR_COPY.incompleteMessage,
         status: 500,
       };
     case "invalid_count":
       return {
-        error: "生成结果不完整",
-        message: "本次未生成完整的 10 条候选，请重试。",
+        error: GENERATION_ERROR_COPY.incompleteTitle,
+        message: GENERATION_ERROR_COPY.incompleteMessage,
         status: 500,
       };
     case "upstream":
@@ -60,8 +61,8 @@ export function mapGenerationError(
       };
     case "internal":
       return {
-        error: "生成失败",
-        message: "生成结果无法处理，请重试",
+        error: GENERATION_ERROR_COPY.failedTitle,
+        message: GENERATION_ERROR_COPY.failedMessage,
         status: 500,
       };
   }

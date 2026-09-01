@@ -255,7 +255,7 @@ export async function readCoachResponse(response: Response): Promise<CoachClient
   throw new CoachClientError(
     response.status,
     structured?.error ?? "request_failed",
-    structured?.message ?? "创作 Agent 暂时无法处理这个操作。",
+    structured?.message ?? "开头助手暂时无法处理这个操作，请重新尝试。",
     embedded,
   );
 }

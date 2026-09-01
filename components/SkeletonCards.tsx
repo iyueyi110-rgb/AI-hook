@@ -1,8 +1,8 @@
 export function SkeletonCards() {
   return (
-    <section aria-busy="true" aria-label="正在生成 Hook" className="editorial-panel overflow-hidden">
+    <section aria-busy="true" aria-label="正在生成开头" className="editorial-panel overflow-hidden">
       <div className="border-b border-[var(--color-line)] px-5 py-4">
-        <p className="text-sm font-extrabold">正在分析平台语气并生成候选</p>
+        <p className="text-sm font-extrabold">正在根据平台和语气生成 10 个开头</p>
         <p className="mt-1 text-xs text-[var(--color-muted)]">历史记录不会被覆盖，请稍候。</p>
       </div>
       <div>
